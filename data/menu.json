@@ -1,0 +1,32 @@
+{
+  "Chinese": {
+    "Chicken Manchurian": 750,
+    "Chicken Chilli Dry": 800,
+    "Spaghetti": 650,
+    "Chicken Mongolian": 850,
+    "Fried Egg Rice": 550
+  },
+  "Fast Food": {
+    "Zinger Burger": 450,
+    "Chicken Shawarma": 300,
+    "Loaded Fries": 400,
+    "Club Sandwich": 500,
+    "Chicken Fajita Pizza": {"Small": 850, "Medium": 1350, "Large": 1850},
+    "Pepperoni Pizza": {"Small": 900, "Medium": 1400, "Large": 1900},
+    "Veggie Delight Pizza": {"Small": 800, "Medium": 1300, "Large": 1800}
+  },
+  "Desi Food": {
+    "Chicken Biryani": 450,
+    "Mutton Karahi": 1800,
+    "Beef Pulao": 700,
+    "Dal Mash": 300,
+    "Chicken Seekh Kebab": 600
+  },
+  "Beverages": {
+    "Cold Drink": 120,
+    "Lassi": 150,
+    "Fresh Lime Soda": 200,
+    "Mint Margarita": 250,
+    "Tea": 100
+  }
+}

@@ -1,0 +1,14 @@
+# Secrets - never upload these
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Editors and system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
