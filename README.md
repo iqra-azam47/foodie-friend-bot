@@ -1,66 +1,82 @@
-# Foodie Friend - AI Restaurant Chatbot
+**Foodie Friend — Autonomous AI Restaurant Ordering Agent**
+An end-to-end, production-oriented conversational commerce agent engineered for Fire Flame restaurant (Gujranwala, Pakistan).Unlike simple prompt-wrapper chatbots, Foodie Friend operates as an autonomous agent using Gemini Tool/Function Calling paired with a deterministic backend state engine. The LLM handles natural language interpretation while Python strictly controls business logic, order immutability, inventory limits, and transaction flows.
 
-**Foodie Friend** is a production-style AI conversational agent built for **Crave Lounge**, a restaurant based in Gujranwala, Pakistan. It lets customers browse the menu, ask questions, and place a complete food order — from item selection to a confirmed receipt — entirely through natural conversation with the Google Gemini API.
+**🌐 Live Application**
 
-This project was built end-to-end as a personal/portfolio project to demonstrate practical Python backend development: API integration, session-based state management, input validation, and secure deployment — not just a wrapper around a chat API.
+Production Deployment: **https://foodie-friend-bot.onrender.com/**
 
-##  Live Demo
+**Hosting Infrastructure: Render (Gunicorn WSGI container)⚡ System Architecture & Highlights
+**
+Plaintext[ User UI ] ──(JSON / Async Fetch)──► [ Flask Controller (app.py) ]
+                                                │
+                 ┌──────────────────────────────┴──────────────────────────────┐
+                 ▼                                                             ▼
+     [ Gemini LLM Agent ]                                         [ Order State Engine ]
+  (Intent Parsing & Tool Call)                                  (tools.py / Local Session)
+                 │                                                             │
+                 └──────── Execute Python Tool Functions ─────────────────────►│
+                               (add_to_cart, validate, lock)                   ▼
+                                                                     [ Deterministic Bill ]
+                                                                     
+**1. Deterministic Business Logic vs. LLM Freedom**
 
-Try it here: **[https://foodie-chatbot-ir0y.onrender.com](https://foodie-chatbot-ir0y.onrender.com)**
+No Price Hallucination: The LLM is strictly prohibited from computing mathematical sums or inventing menu items. All computations run inside deterministic Python routines (bot/orders.py).
 
-*(Hosted on Render)*
+Tool Invocation: The model proposes actions via Gemini Function Calling (add_to_cart, remove_from_cart, prepare_order, confirm_order), which validate payload schemas against real data (data/menu.json).
 
+**2. State & Session Integrity**
 
+Cart State Isolation: Orders are tracked in server-side session dictionaries rather than LLM conversational memory, preventing token degradation and context loss.
 
-##  Features
+Order Freezing: Once confirmed, state transitions to an immutable status to prevent post-order modifications.Session Trimming: Conversational buffers are systematically pruned to adhere to cookie byte bounds while maintaining immediate dialog context.
 
-- **AI-Powered Conversations:** Uses the Google Gemini AI model to provide natural, human-like responses to customer queries.  
-- **Menu Exploration:** Customers can browse specific categories (Fast Food, Chinese, Desi, etc.) or view the full menu.  
-- **Automated Ordering System:** Collects user details (Name, Phone, and Address) and calculates the total bill including a flat delivery fee (Rs. 200).  
-- **Receipt Generation:** Provides a detailed order summary and estimated delivery time (40-50 minutes) upon confirmation.  
-- **Order Locking:** Once an order is confirmed, the system prevents adding new items to maintain order integrity.  
-- **Multilingual Support:** Capable of interacting in multiple languages for a localized experience.  
-- **Smart Fallbacks:** Politely handles unrelated queries and guides users back to the restaurant menu.  
+**3. Defensive Engineering & Security**
 
+Regex Number Verification: Mobile validation enforces Pakistani operator formats (03xx-xxxxxxx / +92).
 
+XSS Neutralization: Client-side message rendering avoids innerHTML, enforcing programmatic DOM generation (document.createElement, textContent) to neutralize malicious payloads.
 
-##  What This Project Demonstrates
+Environment Isolation: Zero credentials in version control; secrets load dynamically via environment injections.
 
-- **AI tool/function calling:** The Gemini model doesn't just chat — it calls real Python functions (`add_to_cart`, `remove_from_cart`, `prepare_order`, `confirm_order`, etc.) that run actual business logic. The AI proposes actions; this code validates and executes them.
-- **Business logic kept out of the AI's hands:** Pricing, stock/quantity limits, phone number validation, and address checks all run in plain, testable Python (`bot/orders.py`) — the AI cannot invent a price or bypass a rule, it can only call functions that enforce them.
-- **Session-based state management:** Each customer's cart and conversation history are stored server-side per session (`bot/orders.py`, `new_order_state`), with history trimmed to fit browser cookie limits without losing conversational context.
-- **Input validation & defensive coding:** Phone numbers are validated against Pakistani mobile number formats with regex, addresses are length-checked, item quantities are bounds-checked, and message length is capped before it ever reaches the API.
-- **Secure by design, not by accident:** Chat messages are rendered client-side using `textContent`/`createTextNode` only (never `innerHTML`), so the app is safe against XSS even if the AI response contains unexpected characters or HTML-like text.
-- **Config-driven, environment-aware setup:** Settings (model name, delivery fee, history limits) live in `config.py`; secrets (`GOOGLE_API_KEY`, `SECRET_KEY`) are read from environment variables, never hardcoded, and `.env` is git-ignored.
-- **Production deployment:** Configured with Gunicorn and a `Procfile` bound to a dynamic `$PORT`, deployed live on Render — not just tested locally.
-- **Clean, modular structure:** Routes, order logic, menu data, and prompt engineering are separated into their own modules instead of one large script.
+📂 Codebase Layout
 
-##  Tech Stack
-
-- **Backend:** Python (Flask)  
-- **Frontend:** HTML, CSS, JavaScript (vanilla, no framework)  
-- **AI Model:** Google Gemini API, with function/tool calling  
-- **Server:** Gunicorn  
-- **Deployment:** Render  
-
-
-
-## 📂 Project Structure
-
-```text
-Foodie-Friend-Bot/
-├── app.py                 # Flask routes and Gemini integration
-├── config.py               # Environment-driven settings
-├── requirements.txt        # Dependencies
-├── Procfile                 # Deployment command for Render
+PlaintextFoodie-Friend-Bot/
 ├── bot/
-│   ├── orders.py            # Cart, validation, and order state logic (the AI's "tools")
-│   ├── menu.py               # Menu data lookup helpers
-│   └── prompt.py             # System prompt / AI instructions
+│   ├── menu.py          # Structured menu query utilities
+│   ├── orders.py        # Core transaction logic & agent tools
+│   └── prompt.py        # System behavior & operational boundary prompts
 ├── data/
-│   └── menu.json              # Menu items and prices
+│   └── menu.json        # Single source of truth for items and pricing
 ├── static/
-│   ├── css/style.css           # UI styling
-│   └── js/chat.js               # Chat rendering (XSS-safe: textContent only)
-└── templates/
-    └── index.html                # Frontend UI
+│   ├── css/style.css    # Clean interface styling
+│   └── js/chat.js       # Resilient UI communication & DOM renderer
+├── templates/
+│   └── index.html       # Web client entrypoint
+├── app.py               # WSGI routing, Gemini orchestrator, error fallbacks
+├── config.py            # Centralized environment & app settings
+├── Procfile             # Cloud process definition (Gunicorn)
+└── requirements.txt     # Locked production dependencies
+
+
+🚀 Local Development 
+Setup
+1. Clone Repository     git clone https://github.com/iqra-azam47/foodie-friend-bot.git
+cd foodie-friend-bot
+
+2. Configure Virtual Environment    python -m venv venv
+# Windows:
+venv\Scripts\activate
+# Linux/macOS:
+source venv/bin/activate
+
+3. Install Dependencies pip install -r requirements.txt
+
+4. Set Environment VariablesCreate a .env file in the project root:Code snippetGOOGLE_API_KEY=your_gemini_api_key_here
+SECRET_KEY=your_secure_random_flask_secret
+GEMINI_MODEL=gemini-3.1-flash-lite
+
+5. Launch Development Server  python app.py
+Access the client locally at [http://127.0.0.1:5000](http://127.0.0.1:5000).
+
+👤 AuthorDeveloper: Iqra Azam
+GitHub: @iqra-azam47
